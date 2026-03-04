@@ -995,10 +995,7 @@
         loadAllPhotos();
       }
 
-      // Auto-login if session exists
-      if (isLoggedIn()) {
-        enterApp();
-      }
+      // Auto-login check — runs after all functions defined above
 
       window.checkPassword = function () {
         const val = document.getElementById("pw-input").value;
@@ -1342,6 +1339,11 @@
         dz.classList.remove("dragging");
         window.handleFiles(e.dataTransfer.files);
       });
+
+      // Auto-login if session exists
+      if (isLoggedIn()) {
+        enterApp();
+      }
     </script>
   </body>
 </html>
