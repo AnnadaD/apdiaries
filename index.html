@@ -817,7 +817,7 @@
     <!-- LOGIN -->
     <div id="login-screen">
       <div class="login-card">
-        <span class="login-sunflower">🌻</span>
+        <span class="login-sunflower">🌻🌻</span>
         <h1 class="login-title">AP Diaries</h1>
         <p class="login-sub">✦ ✦</p>
         <input
@@ -917,14 +917,14 @@
         <div class="drop-zone" id="drop-zone">
           <input
             type="file"
-            accept="image/*"
+            accept="image/*,video/*"
             multiple
             id="file-input"
             onchange="handleFiles(this.files)"
           />
-          <div class="drop-icon">📷</div>
-          <p class="drop-text">tap to choose photos</p>
-          <p class="drop-sub">jpg, png, heic — multiple allowed</p>
+          <div class="drop-icon" id="drop-icon">📷</div>
+          <p class="drop-text" id="drop-text">tap to choose photos or videos</p>
+          <p class="drop-sub">jpg, png, heic, mp4, mov — multiple allowed</p>
         </div>
         <div class="preview-grid" id="preview-grid"></div>
         <span class="section-select-label">Choose Section</span>
@@ -1049,6 +1049,8 @@
         { id: "her", name: "Her", emoji: "👧🏻" },
         { id: "us", name: "Us", emoji: "🩵" },
         { id: "food", name: "Food & Coffee", emoji: "☕️" },
+        { id: "misc", name: "Misc", emoji: "🌸" },
+        { id: "vids", name: "Vids", emoji: "🎬" },
       ];
 
       let selectedFiles = [],
@@ -1139,15 +1141,21 @@
           const item = document.createElement("div");
           item.className = "photo-item";
           item.id = "photo-" + photo.id;
-          const safeUrl = (photo.url || "").replace(/'/g, "\\'");
-          const safePath = (photo.storagePath || "").replace(/'/g, "\\'");
+          const safeUrl = (photo.url || "").replace(/'/g, "'");
+          const safePath = (photo.storagePath || "").replace(/'/g, "'");
+          const isVideo =
+            photo.fileType === "video" ||
+            (photo.url && /\.(mp4|mov|webm|avi)(\?|$)/i.test(photo.url));
+          const mediaHTML = isVideo
+            ? `<video src="${photo.url}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;" muted playsinline></video><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;"><span style="font-size:2rem;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5));">▶️</span></div>`
+            : `<img src="${photo.url}" alt="memory" loading="lazy" onclick="openLightbox('${safeUrl}')" />`;
           item.innerHTML = `
-            <img src="${photo.url}" alt="memory" loading="lazy" onclick="openLightbox('${safeUrl}')" />
+            ${mediaHTML}
             <button class="photo-menu-btn" onclick="togglePhotoMenu(event,'${photo.id}')">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
             </button>
             <div class="photo-dropdown">
-              <button class="photo-dropdown-btn" onclick="openLightbox('${safeUrl}')">
+              <button class="photo-dropdown-btn" onclick="openLightbox('${safeUrl}', ${isVideo})">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View
               </button>
               <button class="photo-dropdown-btn delete" onclick="deletePhoto('${photo.id}','${sectionId}','${safePath}',event)">
@@ -1155,6 +1163,11 @@
               </button>
             </div>
           `;
+          if (isVideo) {
+            item
+              .querySelector("video")
+              .addEventListener("click", () => openLightbox(photo.url, true));
+          }
           grid.appendChild(item);
         });
       }
@@ -1203,19 +1216,29 @@
         const grid = document.getElementById("preview-grid");
         grid.innerHTML = "";
         selectedFiles.forEach((file, i) => {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const item = document.createElement("div");
-            item.className = "preview-item";
+          const item = document.createElement("div");
+          item.className = "preview-item";
+          if (file.type.startsWith("video/")) {
+            const url = URL.createObjectURL(file);
             item.innerHTML =
-              '<img src="' +
-              e.target.result +
-              '" /><button class="preview-remove" onclick="removePreview(' +
+              '<video src="' +
+              url +
+              '" style="width:100%;height:100%;object-fit:cover;" muted playsinline></video><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;"><span style="font-size:1.6rem;">🎬</span></div><button class="preview-remove" onclick="removePreview(' +
               i +
               ')">✕</button>';
-            grid.appendChild(item);
-          };
-          reader.readAsDataURL(file);
+          } else {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              item.innerHTML =
+                '<img src="' +
+                e.target.result +
+                '" /><button class="preview-remove" onclick="removePreview(' +
+                i +
+                ')">✕</button>';
+            };
+            reader.readAsDataURL(file);
+          }
+          grid.appendChild(item);
         });
       };
 
@@ -1241,39 +1264,53 @@
         progressWrap.classList.add("visible");
         let uploaded = 0;
         const total = selectedFiles.length;
-        for (const file of selectedFiles) {
-          const path =
-            "photos/" + selectedSection + "/" + Date.now() + "_" + file.name;
-          const storageRef = ref(storage, path);
-          const task = uploadBytesResumable(storageRef, file);
-          await new Promise((resolve, reject) => {
-            task.on(
-              "state_changed",
-              (snap) => {
-                progressBar.style.width =
-                  ((uploaded + snap.bytesTransferred / snap.totalBytes) /
-                    total) *
-                    100 +
-                  "%";
-              },
-              reject,
-              async () => {
-                const url = await getDownloadURL(task.snapshot.ref);
-                const docRef = await addDoc(
-                  collection(db, "photos_" + selectedSection),
-                  { url, storagePath: path, createdAt: Date.now() }
-                );
-                allPhotos[selectedSection].unshift({
-                  id: docRef.id,
-                  url,
-                  storagePath: path,
-                });
-                uploaded++;
-                resolve();
-              }
-            );
-          });
-        }
+
+        // Upload all photos in parallel
+        await Promise.all(
+          selectedFiles.map((file) => {
+            return new Promise((resolve, reject) => {
+              const path =
+                "photos/" +
+                selectedSection +
+                "/" +
+                Date.now() +
+                "_" +
+                file.name;
+              const storageRef = ref(storage, path);
+              const task = uploadBytesResumable(storageRef, file);
+              task.on(
+                "state_changed",
+                (snap) => {
+                  uploaded =
+                    selectedFiles.filter(
+                      (_, i) => i < selectedFiles.indexOf(file)
+                    ).length +
+                    snap.bytesTransferred / snap.totalBytes;
+                  progressBar.style.width = (uploaded / total) * 100 + "%";
+                },
+                reject,
+                async () => {
+                  const url = await getDownloadURL(task.snapshot.ref);
+                  const fileType = file.type.startsWith("video/")
+                    ? "video"
+                    : "image";
+                  const docRef = await addDoc(
+                    collection(db, "photos_" + selectedSection),
+                    { url, storagePath: path, createdAt: Date.now(), fileType }
+                  );
+                  allPhotos[selectedSection].unshift({
+                    id: docRef.id,
+                    url,
+                    storagePath: path,
+                    fileType,
+                  });
+                  uploaded++;
+                  resolve();
+                }
+              );
+            });
+          })
+        );
         renderSection(selectedSection);
         const card = document.getElementById("section-" + selectedSection);
         if (!card.classList.contains("open")) card.classList.add("open");
@@ -1311,12 +1348,43 @@
           closeUploadModal();
       };
 
-      window.openLightbox = function (url) {
-        document.getElementById("lightbox-img").src = url;
-        document.getElementById("lightbox").classList.add("visible");
+      window.openLightbox = function (url, isVideo) {
+        const lightbox = document.getElementById("lightbox");
+        const img = document.getElementById("lightbox-img");
+        let vid = document.getElementById("lightbox-vid");
+        if (isVideo) {
+          img.style.display = "none";
+          if (!vid) {
+            vid = document.createElement("video");
+            vid.id = "lightbox-vid";
+            vid.controls = true;
+            vid.autoplay = true;
+            vid.style.cssText =
+              "max-width:100%;max-height:90vh;border-radius:16px;";
+            lightbox.insertBefore(
+              vid,
+              lightbox.querySelector(".lightbox-close")
+            );
+          }
+          vid.src = url;
+          vid.style.display = "block";
+        } else {
+          if (vid) {
+            vid.style.display = "none";
+            vid.src = "";
+          }
+          img.style.display = "block";
+          img.src = url;
+        }
+        lightbox.classList.add("visible");
         document.body.style.overflow = "hidden";
       };
       window.closeLightbox = function () {
+        const vid = document.getElementById("lightbox-vid");
+        if (vid) {
+          vid.pause();
+          vid.src = "";
+        }
         document.getElementById("lightbox").classList.remove("visible");
         document.body.style.overflow = "";
       };
