@@ -1,322 +1,853 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>AP Diaries 🩵</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --blue-soft: #b8d4e8; --blue-muted: #8fb8d4; --blue-deep: #5a8fa8;
-      --lavender: #c4bcd8; --text-dark: #2d3a42; --text-mid: #5a6a75;
-      --text-light: #8a9aa5; --glass: rgba(255,255,255,0.55);
-      --glass-border: rgba(255,255,255,0.75);
-      --shadow: 0 8px 32px rgba(90,143,168,0.13);
-      --shadow-lg: 0 20px 60px rgba(90,143,168,0.18);
-    }
-    html { scroll-behavior: smooth; }
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: linear-gradient(135deg, #e8f2f8 0%, #ddd8ee 35%, #f0e8e2 70%, #e2eef5 100%);
-      min-height: 100vh; color: var(--text-dark); overflow-x: hidden;
-    }
-    #login-screen {
-      position: fixed; inset: 0; z-index: 1000;
-      display: flex; align-items: center; justify-content: center;
-      background: linear-gradient(135deg, #d6eaf5 0%, #cfc8e8 40%, #e8d8d0 100%); padding: 24px;
-    }
-    .login-card {
-      background: var(--glass); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-      border: 1.5px solid var(--glass-border); border-radius: 28px; padding: 48px 40px;
-      width: 100%; max-width: 380px; box-shadow: var(--shadow-lg); text-align: center;
-    }
-    .login-title { font-family: 'Cormorant Garamond', serif; font-size: 2.6rem; font-weight: 300; color: var(--blue-deep); margin-bottom: 6px; }
-    .login-sub { font-size: 0.85rem; color: var(--text-light); margin-bottom: 36px; letter-spacing: 0.04em; }
-    .login-input {
-      width: 100%; padding: 14px 18px; background: rgba(255,255,255,0.7);
-      border: 1.5px solid var(--blue-soft); border-radius: 14px;
-      font-family: 'DM Sans', sans-serif; font-size: 1rem; color: var(--text-dark);
-      outline: none; transition: border-color 0.2s; margin-bottom: 14px;
-      letter-spacing: 0.08em; text-align: center;
-    }
-    .login-input:focus { border-color: var(--blue-muted); box-shadow: 0 0 0 3px rgba(143,184,212,0.2); }
-    .login-btn {
-      width: 100%; padding: 14px;
-      background: linear-gradient(135deg, var(--blue-muted), var(--lavender));
-      border: none; border-radius: 14px; color: white;
-      font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 500;
-      cursor: pointer; letter-spacing: 0.06em; transition: opacity 0.2s, transform 0.1s;
-    }
-    .login-btn:hover { opacity: 0.88; } .login-btn:active { transform: scale(0.98); }
-    .login-error { color: #c0636b; font-size: 0.82rem; margin-top: 10px; display: none; }
-    .hearts-deco { font-size: 1.5rem; margin-bottom: 16px; letter-spacing: 6px; }
-    #app { display: none; }
-    header { text-align: center; padding: 56px 24px 32px; }
-    .header-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.8rem, 8vw, 4.5rem); font-weight: 300; color: var(--blue-deep); letter-spacing: 0.04em; }
-    .header-title span { font-style: italic; color: var(--lavender); }
-    .header-sub { font-size: 0.8rem; letter-spacing: 0.22em; color: var(--text-light); text-transform: uppercase; margin-top: 8px; }
-    .header-deco { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 18px; }
-    .header-deco-line { width: 48px; height: 1px; background: linear-gradient(90deg, transparent, var(--blue-soft)); }
-    .header-deco-line.r { background: linear-gradient(90deg, var(--blue-soft), transparent); }
-    .upload-fab {
-      position: fixed; bottom: calc(28px + env(safe-area-inset-bottom)); right: 24px;
-      z-index: 100; width: 56px; height: 56px;
-      background: linear-gradient(135deg, var(--blue-muted), var(--lavender));
-      border: none; border-radius: 18px; box-shadow: 0 8px 24px rgba(90,143,168,0.35);
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      transition: transform 0.2s; color: white;
-    }
-    .upload-fab:hover { transform: translateY(-2px); } .upload-fab:active { transform: scale(0.94); }
-    main { padding: 8px 16px 120px; max-width: 960px; margin: 0 auto; }
-    .section-card {
-      background: var(--glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-      border: 1.5px solid var(--glass-border); border-radius: 24px; margin-bottom: 16px;
-      overflow: hidden; box-shadow: var(--shadow);
-    }
-    .section-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 22px 24px; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
-    }
-    .section-left { display: flex; align-items: center; gap: 14px; }
-    .section-emoji { font-size: 1.6rem; }
-    .section-name { font-family: 'Cormorant Garamond', serif; font-size: 1.45rem; font-weight: 400; color: var(--text-dark); }
-    .section-count { font-size: 0.75rem; color: var(--text-light); letter-spacing: 0.06em; margin-top: 3px; }
-    .section-chevron {
-      width: 28px; height: 28px; background: rgba(184,212,232,0.3); border-radius: 50%;
-      display: flex; align-items: center; justify-content: center; transition: background 0.2s; flex-shrink: 0;
-    }
-    .section-chevron svg { transition: transform 0.3s; }
-    .section-card.open .section-chevron { background: rgba(143,184,212,0.4); }
-    .section-card.open .section-chevron svg { transform: rotate(180deg); }
-    .section-body { max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1); }
-    .section-card.open .section-body { max-height: 9999px; }
-    .section-divider { height: 1px; background: linear-gradient(90deg, transparent, var(--blue-soft), transparent); margin: 0 24px; }
-    .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; padding: 3px; }
-    @media (min-width: 600px) { .photo-grid { grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 4px; } }
-    .photo-item { position: relative; aspect-ratio: 1; overflow: hidden; border-radius: 4px; background: rgba(184,212,232,0.15); cursor: pointer; }
-    .photo-item img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.3s; }
-    .photo-item:hover img { transform: scale(1.04); }
-    .photo-menu-btn {
-      position: absolute; top: 6px; right: 6px; width: 28px; height: 28px;
-      background: rgba(0,0,0,0.45); border: none; border-radius: 50%; color: white;
-      display: flex; align-items: center; justify-content: center; cursor: pointer;
-      opacity: 0; transition: opacity 0.2s; z-index: 10; -webkit-tap-highlight-color: transparent;
-    }
-    .photo-item:hover .photo-menu-btn, .photo-item.menu-open .photo-menu-btn { opacity: 1; }
-    @media (hover: none) { .photo-menu-btn { opacity: 1; } }
-    .photo-dropdown {
-      position: absolute; top: 38px; right: 6px; background: rgba(255,255,255,0.96);
-      backdrop-filter: blur(12px); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.18);
-      overflow: hidden; z-index: 20; min-width: 130px; display: none; border: 1px solid rgba(255,255,255,0.8);
-    }
-    .photo-item.menu-open .photo-dropdown { display: block; }
-    .photo-dropdown-btn {
-      width: 100%; padding: 12px 16px; background: none; border: none;
-      font-family: 'DM Sans', sans-serif; font-size: 0.85rem; text-align: left; cursor: pointer;
-      display: flex; align-items: center; gap: 8px; transition: background 0.15s; color: var(--text-dark);
-    }
-    .photo-dropdown-btn:hover { background: rgba(184,212,232,0.2); }
-    .photo-dropdown-btn.delete { color: #c0636b; }
-    .photo-dropdown-btn.delete:hover { background: rgba(192,99,107,0.08); }
-    .empty-state { text-align: center; padding: 40px 24px; color: var(--text-light); font-size: 0.85rem; }
-    .empty-state .empty-icon { font-size: 2rem; margin-bottom: 10px; }
-    .modal-overlay {
-      position: fixed; inset: 0; z-index: 200; background: rgba(45,58,66,0.45);
-      backdrop-filter: blur(6px); display: flex; align-items: flex-end; justify-content: center;
-      opacity: 0; pointer-events: none; transition: opacity 0.3s;
-    }
-    .modal-overlay.visible { opacity: 1; pointer-events: all; }
-    .modal-sheet {
-      background: linear-gradient(160deg, #eef5fb 0%, #e8e2f5 100%);
-      border-radius: 28px 28px 0 0; width: 100%; max-width: 520px;
-      padding: 12px 28px calc(36px + env(safe-area-inset-bottom));
-      transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.34,1.2,0.64,1);
-      max-height: 92vh; overflow-y: auto;
-    }
-    .modal-overlay.visible .modal-sheet { transform: translateY(0); }
-    .modal-handle { width: 40px; height: 4px; background: var(--blue-soft); border-radius: 2px; margin: 0 auto 24px; }
-    .modal-title { font-family: 'Cormorant Garamond', serif; font-size: 1.7rem; font-weight: 300; color: var(--blue-deep); margin-bottom: 20px; }
-    .drop-zone {
-      border: 2px dashed var(--blue-soft); border-radius: 18px; padding: 36px 24px;
-      text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s;
-      background: rgba(255,255,255,0.4); margin-bottom: 20px; position: relative;
-    }
-    .drop-zone:hover, .drop-zone.dragging { border-color: var(--blue-muted); background: rgba(184,212,232,0.12); }
-    .drop-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-    .drop-icon { font-size: 2rem; margin-bottom: 8px; }
-    .drop-text { font-size: 0.88rem; color: var(--text-mid); }
-    .drop-sub { font-size: 0.75rem; color: var(--text-light); margin-top: 4px; }
-    .preview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px; }
-    .preview-item { aspect-ratio: 1; border-radius: 10px; overflow: hidden; position: relative; background: rgba(184,212,232,0.2); }
-    .preview-item img { width: 100%; height: 100%; object-fit: cover; }
-    .preview-remove {
-      position: absolute; top: 4px; right: 4px; width: 20px; height: 20px;
-      background: rgba(0,0,0,0.5); border: none; border-radius: 50%; color: white;
-      font-size: 0.65rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
-    }
-    .section-select-label { font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-light); margin-bottom: 10px; display: block; }
-    .section-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
-    .section-pill {
-      padding: 8px 16px; border: 1.5px solid var(--blue-soft); border-radius: 50px;
-      background: rgba(255,255,255,0.5); font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
-      color: var(--text-mid); cursor: pointer; transition: all 0.2s;
-    }
-    .section-pill.selected { background: linear-gradient(135deg, var(--blue-muted), var(--lavender)); border-color: transparent; color: white; }
-    .progress-wrap { height: 4px; background: rgba(184,212,232,0.3); border-radius: 2px; margin-bottom: 16px; overflow: hidden; display: none; }
-    .progress-wrap.visible { display: block; }
-    .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--blue-muted), var(--lavender)); border-radius: 2px; transition: width 0.3s; }
-    .upload-submit {
-      width: 100%; padding: 15px; background: linear-gradient(135deg, var(--blue-muted), var(--lavender));
-      border: none; border-radius: 16px; color: white;
-      font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 500;
-      cursor: pointer; letter-spacing: 0.04em; transition: opacity 0.2s, transform 0.1s;
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-    }
-    .upload-submit:hover { opacity: 0.88; } .upload-submit:active { transform: scale(0.98); }
-    .upload-submit:disabled { opacity: 0.5; cursor: not-allowed; }
-    .lightbox {
-      position: fixed; inset: 0; z-index: 300; background: rgba(20,28,34,0.92);
-      display: flex; align-items: center; justify-content: center;
-      opacity: 0; pointer-events: none; transition: opacity 0.25s; padding: 24px;
-    }
-    .lightbox.visible { opacity: 1; pointer-events: all; }
-    .lightbox img { max-width: 100%; max-height: 90vh; border-radius: 16px; object-fit: contain; }
-    .lightbox-close {
-      position: absolute; top: 20px; right: 20px; width: 40px; height: 40px;
-      background: rgba(255,255,255,0.12); border: none; border-radius: 50%;
-      color: white; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
-    }
-    .toast {
-      position: fixed; bottom: calc(96px + env(safe-area-inset-bottom));
-      left: 50%; transform: translateX(-50%) translateY(20px);
-      background: rgba(45,58,66,0.9); color: white; padding: 10px 20px;
-      border-radius: 50px; font-size: 0.82rem; opacity: 0; transition: all 0.3s;
-      pointer-events: none; white-space: nowrap; z-index: 500;
-    }
-    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-    .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.4); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .bg-deco { position: fixed; pointer-events: none; z-index: 0; font-size: 4rem; opacity: 0.04; user-select: none; }
-    .bg-deco.d1 { top: 10%; left: -2%; transform: rotate(-20deg); }
-    .bg-deco.d2 { top: 40%; right: -1%; transform: rotate(15deg); }
-    .bg-deco.d3 { bottom: 15%; left: 5%; transform: rotate(10deg); }
-  </style>
-</head>
-<body>
-<div class="bg-deco d1">🌸</div>
-<div class="bg-deco d2">🫧</div>
-<div class="bg-deco d3">✨</div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>AP Diaries 🩵</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --blue-soft: #b8d4e8;
+        --blue-muted: #8fb8d4;
+        --blue-deep: #5a8fa8;
+        --lavender: #c4bcd8;
+        --text-dark: #2d3a42;
+        --text-mid: #5a6a75;
+        --text-light: #8a9aa5;
+        --glass: rgba(255, 255, 255, 0.55);
+        --glass-border: rgba(255, 255, 255, 0.75);
+        --shadow: 0 8px 32px rgba(90, 143, 168, 0.13);
+        --shadow-lg: 0 20px 60px rgba(90, 143, 168, 0.18);
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        font-family: "DM Sans", sans-serif;
+        background: linear-gradient(
+          135deg,
+          #e8f2f8 0%,
+          #ddd8ee 35%,
+          #f0e8e2 70%,
+          #e2eef5 100%
+        );
+        min-height: 100vh;
+        color: var(--text-dark);
+        overflow-x: hidden;
+      }
+      #login-screen {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(
+          135deg,
+          #d6eaf5 0%,
+          #cfc8e8 40%,
+          #e8d8d0 100%
+        );
+        padding: 24px;
+      }
+      .login-card {
+        background: var(--glass);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1.5px solid var(--glass-border);
+        border-radius: 28px;
+        padding: 48px 40px;
+        width: 100%;
+        max-width: 380px;
+        box-shadow: var(--shadow-lg);
+        text-align: center;
+      }
+      .login-title {
+        font-family: "Cormorant Garamond", serif;
+        font-size: 2.6rem;
+        font-weight: 300;
+        color: var(--blue-deep);
+        margin-bottom: 6px;
+      }
+      .login-sub {
+        font-size: 0.85rem;
+        color: var(--text-light);
+        margin-bottom: 36px;
+        letter-spacing: 0.04em;
+      }
+      .login-input {
+        width: 100%;
+        padding: 14px 18px;
+        background: rgba(255, 255, 255, 0.7);
+        border: 1.5px solid var(--blue-soft);
+        border-radius: 14px;
+        font-family: "DM Sans", sans-serif;
+        font-size: 1rem;
+        color: var(--text-dark);
+        outline: none;
+        transition: border-color 0.2s;
+        margin-bottom: 14px;
+        letter-spacing: 0.08em;
+        text-align: center;
+      }
+      .login-input:focus {
+        border-color: var(--blue-muted);
+        box-shadow: 0 0 0 3px rgba(143, 184, 212, 0.2);
+      }
+      .login-btn {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, var(--blue-muted), var(--lavender));
+        border: none;
+        border-radius: 14px;
+        color: white;
+        font-family: "DM Sans", sans-serif;
+        font-size: 0.95rem;
+        font-weight: 500;
+        cursor: pointer;
+        letter-spacing: 0.06em;
+        transition: opacity 0.2s, transform 0.1s;
+      }
+      .login-btn:hover {
+        opacity: 0.88;
+      }
+      .login-btn:active {
+        transform: scale(0.98);
+      }
+      .login-error {
+        color: #c0636b;
+        font-size: 0.82rem;
+        margin-top: 10px;
+        display: none;
+      }
+      .hearts-deco {
+        font-size: 1.5rem;
+        margin-bottom: 16px;
+        letter-spacing: 6px;
+      }
+      #app {
+        display: none;
+      }
+      header {
+        text-align: center;
+        padding: 56px 24px 32px;
+      }
+      .header-title {
+        font-family: "Cormorant Garamond", serif;
+        font-size: clamp(2.8rem, 8vw, 4.5rem);
+        font-weight: 300;
+        color: var(--blue-deep);
+        letter-spacing: 0.04em;
+      }
+      .header-title span {
+        font-style: italic;
+        color: var(--lavender);
+      }
+      .header-sub {
+        font-size: 0.8rem;
+        letter-spacing: 0.22em;
+        color: var(--text-light);
+        text-transform: uppercase;
+        margin-top: 8px;
+      }
+      .header-deco {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin-top: 18px;
+      }
+      .header-deco-line {
+        width: 48px;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--blue-soft));
+      }
+      .header-deco-line.r {
+        background: linear-gradient(90deg, var(--blue-soft), transparent);
+      }
+      .upload-fab {
+        position: fixed;
+        bottom: calc(28px + env(safe-area-inset-bottom));
+        right: 24px;
+        z-index: 100;
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(135deg, var(--blue-muted), var(--lavender));
+        border: none;
+        border-radius: 18px;
+        box-shadow: 0 8px 24px rgba(90, 143, 168, 0.35);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s;
+        color: white;
+      }
+      .upload-fab:hover {
+        transform: translateY(-2px);
+      }
+      .upload-fab:active {
+        transform: scale(0.94);
+      }
+      main {
+        padding: 8px 16px 120px;
+        max-width: 960px;
+        margin: 0 auto;
+      }
+      .section-card {
+        background: var(--glass);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1.5px solid var(--glass-border);
+        border-radius: 24px;
+        margin-bottom: 16px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+      }
+      .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 22px 24px;
+        cursor: pointer;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .section-left {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .section-emoji {
+        font-size: 1.6rem;
+      }
+      .section-name {
+        font-family: "Cormorant Garamond", serif;
+        font-size: 1.45rem;
+        font-weight: 400;
+        color: var(--text-dark);
+      }
+      .section-count {
+        font-size: 0.75rem;
+        color: var(--text-light);
+        letter-spacing: 0.06em;
+        margin-top: 3px;
+      }
+      .section-chevron {
+        width: 28px;
+        height: 28px;
+        background: rgba(184, 212, 232, 0.3);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+        flex-shrink: 0;
+      }
+      .section-chevron svg {
+        transition: transform 0.3s;
+      }
+      .section-card.open .section-chevron {
+        background: rgba(143, 184, 212, 0.4);
+      }
+      .section-card.open .section-chevron svg {
+        transform: rotate(180deg);
+      }
+      .section-body {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .section-card.open .section-body {
+        max-height: 9999px;
+      }
+      .section-divider {
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--blue-soft),
+          transparent
+        );
+        margin: 0 24px;
+      }
+      .photo-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 3px;
+        padding: 3px;
+      }
+      @media (min-width: 600px) {
+        .photo-grid {
+          grid-template-columns: repeat(4, 1fr);
+          gap: 4px;
+          padding: 4px;
+        }
+      }
+      .photo-item {
+        position: relative;
+        aspect-ratio: 1;
+        overflow: hidden;
+        border-radius: 4px;
+        background: rgba(184, 212, 232, 0.15);
+        cursor: pointer;
+      }
+      .photo-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.3s;
+      }
+      .photo-item:hover img {
+        transform: scale(1.04);
+      }
+      .photo-menu-btn {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        width: 28px;
+        height: 28px;
+        background: rgba(0, 0, 0, 0.45);
+        border: none;
+        border-radius: 50%;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.2s;
+        z-index: 10;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .photo-item:hover .photo-menu-btn,
+      .photo-item.menu-open .photo-menu-btn {
+        opacity: 1;
+      }
+      @media (hover: none) {
+        .photo-menu-btn {
+          opacity: 1;
+        }
+      }
+      .photo-dropdown {
+        position: absolute;
+        top: 38px;
+        right: 6px;
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(12px);
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+        overflow: hidden;
+        z-index: 20;
+        min-width: 130px;
+        display: none;
+        border: 1px solid rgba(255, 255, 255, 0.8);
+      }
+      .photo-item.menu-open .photo-dropdown {
+        display: block;
+      }
+      .photo-dropdown-btn {
+        width: 100%;
+        padding: 12px 16px;
+        background: none;
+        border: none;
+        font-family: "DM Sans", sans-serif;
+        font-size: 0.85rem;
+        text-align: left;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: background 0.15s;
+        color: var(--text-dark);
+      }
+      .photo-dropdown-btn:hover {
+        background: rgba(184, 212, 232, 0.2);
+      }
+      .photo-dropdown-btn.delete {
+        color: #c0636b;
+      }
+      .photo-dropdown-btn.delete:hover {
+        background: rgba(192, 99, 107, 0.08);
+      }
+      .empty-state {
+        text-align: center;
+        padding: 40px 24px;
+        color: var(--text-light);
+        font-size: 0.85rem;
+      }
+      .empty-state .empty-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+      }
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 200;
+        background: rgba(45, 58, 66, 0.45);
+        backdrop-filter: blur(6px);
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+      }
+      .modal-overlay.visible {
+        opacity: 1;
+        pointer-events: all;
+      }
+      .modal-sheet {
+        background: linear-gradient(160deg, #eef5fb 0%, #e8e2f5 100%);
+        border-radius: 28px 28px 0 0;
+        width: 100%;
+        max-width: 520px;
+        padding: 12px 28px calc(36px + env(safe-area-inset-bottom));
+        transform: translateY(100%);
+        transition: transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
+        max-height: 92vh;
+        overflow-y: auto;
+      }
+      .modal-overlay.visible .modal-sheet {
+        transform: translateY(0);
+      }
+      .modal-handle {
+        width: 40px;
+        height: 4px;
+        background: var(--blue-soft);
+        border-radius: 2px;
+        margin: 0 auto 24px;
+      }
+      .modal-title {
+        font-family: "Cormorant Garamond", serif;
+        font-size: 1.7rem;
+        font-weight: 300;
+        color: var(--blue-deep);
+        margin-bottom: 20px;
+      }
+      .drop-zone {
+        border: 2px dashed var(--blue-soft);
+        border-radius: 18px;
+        padding: 36px 24px;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.2s, background 0.2s;
+        background: rgba(255, 255, 255, 0.4);
+        margin-bottom: 20px;
+        position: relative;
+      }
+      .drop-zone:hover,
+      .drop-zone.dragging {
+        border-color: var(--blue-muted);
+        background: rgba(184, 212, 232, 0.12);
+      }
+      .drop-zone input[type="file"] {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+        width: 100%;
+        height: 100%;
+      }
+      .drop-icon {
+        font-size: 2rem;
+        margin-bottom: 8px;
+      }
+      .drop-text {
+        font-size: 0.88rem;
+        color: var(--text-mid);
+      }
+      .drop-sub {
+        font-size: 0.75rem;
+        color: var(--text-light);
+        margin-top: 4px;
+      }
+      .preview-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-bottom: 20px;
+      }
+      .preview-item {
+        aspect-ratio: 1;
+        border-radius: 10px;
+        overflow: hidden;
+        position: relative;
+        background: rgba(184, 212, 232, 0.2);
+      }
+      .preview-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .preview-remove {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        width: 20px;
+        height: 20px;
+        background: rgba(0, 0, 0, 0.5);
+        border: none;
+        border-radius: 50%;
+        color: white;
+        font-size: 0.65rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .section-select-label {
+        font-size: 0.78rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--text-light);
+        margin-bottom: 10px;
+        display: block;
+      }
+      .section-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 24px;
+      }
+      .section-pill {
+        padding: 8px 16px;
+        border: 1.5px solid var(--blue-soft);
+        border-radius: 50px;
+        background: rgba(255, 255, 255, 0.5);
+        font-family: "DM Sans", sans-serif;
+        font-size: 0.85rem;
+        color: var(--text-mid);
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .section-pill.selected {
+        background: linear-gradient(135deg, var(--blue-muted), var(--lavender));
+        border-color: transparent;
+        color: white;
+      }
+      .progress-wrap {
+        height: 4px;
+        background: rgba(184, 212, 232, 0.3);
+        border-radius: 2px;
+        margin-bottom: 16px;
+        overflow: hidden;
+        display: none;
+      }
+      .progress-wrap.visible {
+        display: block;
+      }
+      .progress-bar {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, var(--blue-muted), var(--lavender));
+        border-radius: 2px;
+        transition: width 0.3s;
+      }
+      .upload-submit {
+        width: 100%;
+        padding: 15px;
+        background: linear-gradient(135deg, var(--blue-muted), var(--lavender));
+        border: none;
+        border-radius: 16px;
+        color: white;
+        font-family: "DM Sans", sans-serif;
+        font-size: 0.95rem;
+        font-weight: 500;
+        cursor: pointer;
+        letter-spacing: 0.04em;
+        transition: opacity 0.2s, transform 0.1s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+      .upload-submit:hover {
+        opacity: 0.88;
+      }
+      .upload-submit:active {
+        transform: scale(0.98);
+      }
+      .upload-submit:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .lightbox {
+        position: fixed;
+        inset: 0;
+        z-index: 300;
+        background: rgba(20, 28, 34, 0.92);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s;
+        padding: 24px;
+      }
+      .lightbox.visible {
+        opacity: 1;
+        pointer-events: all;
+      }
+      .lightbox img {
+        max-width: 100%;
+        max-height: 90vh;
+        border-radius: 16px;
+        object-fit: contain;
+      }
+      .lightbox-close {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.12);
+        border: none;
+        border-radius: 50%;
+        color: white;
+        font-size: 1.1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .toast {
+        position: fixed;
+        bottom: calc(96px + env(safe-area-inset-bottom));
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: rgba(45, 58, 66, 0.9);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 50px;
+        font-size: 0.82rem;
+        opacity: 0;
+        transition: all 0.3s;
+        pointer-events: none;
+        white-space: nowrap;
+        z-index: 500;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+      .spinner {
+        width: 18px;
+        height: 18px;
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .bg-deco {
+        position: fixed;
+        pointer-events: none;
+        z-index: 0;
+        font-size: 4rem;
+        opacity: 0.04;
+        user-select: none;
+      }
+      .bg-deco.d1 {
+        top: 10%;
+        left: -2%;
+        transform: rotate(-20deg);
+      }
+      .bg-deco.d2 {
+        top: 40%;
+        right: -1%;
+        transform: rotate(15deg);
+      }
+      .bg-deco.d3 {
+        bottom: 15%;
+        left: 5%;
+        transform: rotate(10deg);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bg-deco d1">🌸</div>
+    <div class="bg-deco d2">🫧</div>
+    <div class="bg-deco d3">✨</div>
 
-<div id="login-screen">
-  <div class="login-card">
-    <div class="hearts-deco">🩵 🤍</div>
-    <h1 class="login-title">AP Diaries</h1>
-    <p class="login-sub">our little world ✦</p>
-    <input class="login-input" type="password" id="pw-input" placeholder="enter password" autocomplete="current-password" />
-    <button class="login-btn" onclick="checkPassword()">Open Our Diary</button>
-    <p class="login-error" id="login-error">wrong password, try again 🥺</p>
-  </div>
-</div>
-
-<div id="app">
-  <header>
-    <h1 class="header-title">AP <span>Diaries</span></h1>
-    <p class="header-sub">our memories ✦ forever</p>
-    <div class="header-deco">
-      <div class="header-deco-line"></div>
-      <span>🩵</span>
-      <div class="header-deco-line r"></div>
+    <div id="login-screen">
+      <div class="login-card">
+        <!-- <div class="hearts-deco">🩵 🤍</div> -->
+        <h1 class="login-title">AP Diaries</h1>
+        <!-- <p class="login-sub">our little world ✦</p> -->
+        <input
+          class="login-input"
+          type="password"
+          id="pw-input"
+          placeholder="enter password"
+          autocomplete="current-password"
+        />
+        <button class="login-btn" onclick="checkPassword()">
+          Open Our Diary
+        </button>
+        <p class="login-error" id="login-error">wrong password, try again 🥺</p>
+      </div>
     </div>
-  </header>
-  <main><div id="sections-container"></div></main>
-  <button class="upload-fab" onclick="openUploadModal()" title="Add photos">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-    </svg>
-  </button>
-</div>
 
-<div class="modal-overlay" id="upload-modal" onclick="handleModalClick(event)">
-  <div class="modal-sheet" onclick="event.stopPropagation()">
-    <div class="modal-handle"></div>
-    <h2 class="modal-title">Add a Memory 🩵</h2>
-    <div class="drop-zone" id="drop-zone">
-      <input type="file" accept="image/*" multiple id="file-input" onchange="handleFiles(this.files)" />
-      <div class="drop-icon">📷</div>
-      <p class="drop-text">tap to choose photos</p>
-      <p class="drop-sub">jpg, png, heic — multiple allowed</p>
+    <div id="app">
+      <header>
+        <h1 class="header-title">AP <span>Diaries</span></h1>
+        <!-- <p class="header-sub">our memories ✦ forever</p> -->
+        <div class="header-deco">
+          <div class="header-deco-line"></div>
+          <!-- <span>🩵</span> -->
+          <div class="header-deco-line r"></div>
+        </div>
+      </header>
+      <main><div id="sections-container"></div></main>
+      <button class="upload-fab" onclick="openUploadModal()" title="Add photos">
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+      </button>
     </div>
-    <div class="preview-grid" id="preview-grid"></div>
-    <span class="section-select-label">Choose Section</span>
-    <div class="section-pills" id="section-pills"></div>
-    <div class="progress-wrap" id="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
-    <button class="upload-submit" id="upload-btn" onclick="uploadPhotos()">Save to Our Diary</button>
-  </div>
-</div>
 
-<div class="lightbox" id="lightbox" onclick="closeLightbox()">
-  <img id="lightbox-img" src="" alt="" />
-  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
-</div>
-<div class="toast" id="toast"></div>
+    <div
+      class="modal-overlay"
+      id="upload-modal"
+      onclick="handleModalClick(event)"
+    >
+      <div class="modal-sheet" onclick="event.stopPropagation()">
+        <div class="modal-handle"></div>
+        <h2 class="modal-title">Add a Memory 🩵</h2>
+        <div class="drop-zone" id="drop-zone">
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            id="file-input"
+            onchange="handleFiles(this.files)"
+          />
+          <div class="drop-icon">📷</div>
+          <p class="drop-text">tap to choose photos</p>
+          <p class="drop-sub">jpg, png, heic — multiple allowed</p>
+        </div>
+        <div class="preview-grid" id="preview-grid"></div>
+        <span class="section-select-label">Choose Section</span>
+        <div class="section-pills" id="section-pills"></div>
+        <div class="progress-wrap" id="progress-wrap">
+          <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <button class="upload-submit" id="upload-btn" onclick="uploadPhotos()">
+          Save to Our Diary
+        </button>
+      </div>
+    </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+    <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+      <img id="lightbox-img" src="" alt="" />
+      <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+    </div>
+    <div class="toast" id="toast"></div>
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAF7160RPRtNqVddta7tvFkTvInpLIX1BI",
-  authDomain: "apdiaries-5f2dd.firebaseapp.com",
-  projectId: "apdiaries-5f2dd",
-  storageBucket: "apdiaries-5f2dd.firebasestorage.app",
-  messagingSenderId: "419446271726",
-  appId: "1:419446271726:web:5e167a115c5d8595d38dff"
-};
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+      import {
+        getFirestore,
+        collection,
+        addDoc,
+        getDocs,
+        deleteDoc,
+        doc,
+        query,
+        orderBy,
+      } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+      import {
+        getStorage,
+        ref,
+        uploadBytesResumable,
+        getDownloadURL,
+        deleteObject,
+      } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
-const fbApp = initializeApp(firebaseConfig);
-const db = getFirestore(fbApp);
-const storage = getStorage(fbApp);
+      const firebaseConfig = {
+        apiKey: "AIzaSyAF7160RPRtNqVddta7tvFkTvInpLIX1BI",
+        authDomain: "apdiaries-5f2dd.firebaseapp.com",
+        projectId: "apdiaries-5f2dd",
+        storageBucket: "apdiaries-5f2dd.firebasestorage.app",
+        messagingSenderId: "419446271726",
+        appId: "1:419446271726:web:5e167a115c5d8595d38dff",
+      };
 
-// CHANGE THIS PASSWORD to whatever you want!
-const PASSWORD = "apdiaries2024";
+      const fbApp = initializeApp(firebaseConfig);
+      const db = getFirestore(fbApp);
+      const storage = getStorage(fbApp);
 
-window.checkPassword = function() {
-  const val = document.getElementById('pw-input').value;
-  if (val === PASSWORD) {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    loadAllPhotos();
-  } else {
-    document.getElementById('login-error').style.display = 'block';
-    document.getElementById('pw-input').value = '';
-    document.getElementById('pw-input').focus();
-  }
-};
-document.getElementById('pw-input').addEventListener('keydown', e => { if (e.key === 'Enter') window.checkPassword(); });
+      // CHANGE THIS PASSWORD to whatever you want!
+      const PASSWORD = "1111";
 
-const SECTIONS = [
-  { id: 'him',  name: 'Him',           emoji: '👦🏻' },
-  { id: 'her',  name: 'Her',           emoji: '👧🏻' },
-  { id: 'us',   name: 'Us',            emoji: '🩵' },
-  { id: 'food', name: 'Food & Coffee', emoji: '☕️' },
-];
+      window.checkPassword = function () {
+        const val = document.getElementById("pw-input").value;
+        if (val === PASSWORD) {
+          document.getElementById("login-screen").style.display = "none";
+          document.getElementById("app").style.display = "block";
+          loadAllPhotos();
+        } else {
+          document.getElementById("login-error").style.display = "block";
+          document.getElementById("pw-input").value = "";
+          document.getElementById("pw-input").focus();
+        }
+      };
+      document.getElementById("pw-input").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") window.checkPassword();
+      });
 
-let selectedFiles = [], selectedSection = null, allPhotos = {};
-SECTIONS.forEach(s => allPhotos[s.id] = []);
+      const SECTIONS = [
+        { id: "him", name: "Him", emoji: "👦🏻" },
+        { id: "her", name: "Her", emoji: "👧🏻" },
+        { id: "us", name: "Us", emoji: "🩵" },
+        { id: "food", name: "Food & Coffee", emoji: "☕️" },
+      ];
 
-function buildSections() {
-  const container = document.getElementById('sections-container');
-  container.innerHTML = '';
-  const pills = document.getElementById('section-pills');
-  pills.innerHTML = '';
-  SECTIONS.forEach(sec => {
-    const card = document.createElement('div');
-    card.className = 'section-card';
-    card.id = 'section-' + sec.id;
-    card.innerHTML = `
+      let selectedFiles = [],
+        selectedSection = null,
+        allPhotos = {};
+      SECTIONS.forEach((s) => (allPhotos[s.id] = []));
+
+      function buildSections() {
+        const container = document.getElementById("sections-container");
+        container.innerHTML = "";
+        const pills = document.getElementById("section-pills");
+        pills.innerHTML = "";
+        SECTIONS.forEach((sec) => {
+          const card = document.createElement("div");
+          card.className = "section-card";
+          card.id = "section-" + sec.id;
+          card.innerHTML = `
       <div class="section-header" onclick="toggleSection('${sec.id}')">
         <div class="section-left">
           <span class="section-emoji">${sec.emoji}</span>
@@ -332,52 +863,67 @@ function buildSections() {
       <div class="section-divider"></div>
       <div class="section-body"><div class="photo-grid" id="grid-${sec.id}"></div></div>
     `;
-    container.appendChild(card);
-    const pill = document.createElement('button');
-    pill.className = 'section-pill';
-    pill.dataset.section = sec.id;
-    pill.textContent = sec.emoji + ' ' + sec.name;
-    pill.onclick = () => selectSection(sec.id);
-    pills.appendChild(pill);
-  });
-}
+          container.appendChild(card);
+          const pill = document.createElement("button");
+          pill.className = "section-pill";
+          pill.dataset.section = sec.id;
+          pill.textContent = sec.emoji + " " + sec.name;
+          pill.onclick = () => selectSection(sec.id);
+          pills.appendChild(pill);
+        });
+      }
 
-window.toggleSection = id => document.getElementById('section-' + id).classList.toggle('open');
+      window.toggleSection = (id) =>
+        document.getElementById("section-" + id).classList.toggle("open");
 
-function selectSection(id) {
-  selectedSection = id;
-  document.querySelectorAll('.section-pill').forEach(p => p.classList.toggle('selected', p.dataset.section === id));
-}
+      function selectSection(id) {
+        selectedSection = id;
+        document
+          .querySelectorAll(".section-pill")
+          .forEach((p) =>
+            p.classList.toggle("selected", p.dataset.section === id)
+          );
+      }
 
-async function loadAllPhotos() {
-  for (const sec of SECTIONS) {
-    try {
-      const q = query(collection(db, 'photos_' + sec.id), orderBy('createdAt', 'desc'));
-      const snap = await getDocs(q);
-      allPhotos[sec.id] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    } catch(e) { allPhotos[sec.id] = []; }
-    renderSection(sec.id);
-  }
-}
+      async function loadAllPhotos() {
+        for (const sec of SECTIONS) {
+          try {
+            const q = query(
+              collection(db, "photos_" + sec.id),
+              orderBy("createdAt", "desc")
+            );
+            const snap = await getDocs(q);
+            allPhotos[sec.id] = snap.docs.map((d) => ({
+              id: d.id,
+              ...d.data(),
+            }));
+          } catch (e) {
+            allPhotos[sec.id] = [];
+          }
+          renderSection(sec.id);
+        }
+      }
 
-function renderSection(sectionId) {
-  const photos = allPhotos[sectionId];
-  const grid = document.getElementById('grid-' + sectionId);
-  const count = document.getElementById('count-' + sectionId);
-  if (!grid) return;
-  count.textContent = photos.length + ' photo' + (photos.length !== 1 ? 's' : '');
-  if (photos.length === 0) {
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📷</div><div>no photos yet — add your first memory!</div></div>';
-    return;
-  }
-  grid.innerHTML = '';
-  photos.forEach(photo => {
-    const item = document.createElement('div');
-    item.className = 'photo-item';
-    item.id = 'photo-' + photo.id;
-    const safeUrl = (photo.url || '').replace(/'/g, "\\'");
-    const safePath = (photo.storagePath || '').replace(/'/g, "\\'");
-    item.innerHTML = `
+      function renderSection(sectionId) {
+        const photos = allPhotos[sectionId];
+        const grid = document.getElementById("grid-" + sectionId);
+        const count = document.getElementById("count-" + sectionId);
+        if (!grid) return;
+        count.textContent =
+          photos.length + " photo" + (photos.length !== 1 ? "s" : "");
+        if (photos.length === 0) {
+          grid.innerHTML =
+            '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📷</div><div>no photos yet — add your first memory!</div></div>';
+          return;
+        }
+        grid.innerHTML = "";
+        photos.forEach((photo) => {
+          const item = document.createElement("div");
+          item.className = "photo-item";
+          item.id = "photo-" + photo.id;
+          const safeUrl = (photo.url || "").replace(/'/g, "\\'");
+          const safePath = (photo.storagePath || "").replace(/'/g, "\\'");
+          item.innerHTML = `
       <img src="${photo.url}" alt="memory" loading="lazy" onclick="openLightbox('${safeUrl}')" />
       <button class="photo-menu-btn" onclick="togglePhotoMenu(event,'${photo.id}')">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
@@ -391,129 +937,193 @@ function renderSection(sectionId) {
         </button>
       </div>
     `;
-    grid.appendChild(item);
-  });
-}
+          grid.appendChild(item);
+        });
+      }
 
-window.togglePhotoMenu = function(e, photoId) {
-  e.stopPropagation();
-  const item = document.getElementById('photo-' + photoId);
-  const wasOpen = item.classList.contains('menu-open');
-  document.querySelectorAll('.photo-item.menu-open').forEach(i => i.classList.remove('menu-open'));
-  if (!wasOpen) item.classList.add('menu-open');
-};
+      window.togglePhotoMenu = function (e, photoId) {
+        e.stopPropagation();
+        const item = document.getElementById("photo-" + photoId);
+        const wasOpen = item.classList.contains("menu-open");
+        document
+          .querySelectorAll(".photo-item.menu-open")
+          .forEach((i) => i.classList.remove("menu-open"));
+        if (!wasOpen) item.classList.add("menu-open");
+      };
 
-document.addEventListener('click', () => document.querySelectorAll('.photo-item.menu-open').forEach(i => i.classList.remove('menu-open')));
-
-window.deletePhoto = async function(photoId, sectionId, storagePath, e) {
-  e.stopPropagation();
-  document.querySelectorAll('.photo-item.menu-open').forEach(i => i.classList.remove('menu-open'));
-  if (!confirm('Delete this memory? 🥺')) return;
-  try {
-    await deleteDoc(doc(db, 'photos_' + sectionId, photoId));
-    if (storagePath) { try { await deleteObject(ref(storage, storagePath)); } catch(_) {} }
-    allPhotos[sectionId] = allPhotos[sectionId].filter(p => p.id !== photoId);
-    renderSection(sectionId);
-    showToast('Photo deleted 🗑️');
-  } catch(err) { showToast('Could not delete, try again'); }
-};
-
-window.handleFiles = function(files) {
-  selectedFiles = Array.from(files);
-  const grid = document.getElementById('preview-grid');
-  grid.innerHTML = '';
-  selectedFiles.forEach((file, i) => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      const item = document.createElement('div');
-      item.className = 'preview-item';
-      item.innerHTML = '<img src="' + e.target.result + '" /><button class="preview-remove" onclick="removePreview(' + i + ')">✕</button>';
-      grid.appendChild(item);
-    };
-    reader.readAsDataURL(file);
-  });
-};
-
-window.removePreview = function(i) {
-  selectedFiles.splice(i, 1);
-  window.handleFiles(selectedFiles);
-};
-
-window.uploadPhotos = async function() {
-  if (!selectedFiles.length) { showToast('Pick some photos first! 📷'); return; }
-  if (!selectedSection) { showToast('Choose a section! 🩵'); return; }
-  const btn = document.getElementById('upload-btn');
-  const progressWrap = document.getElementById('progress-wrap');
-  const progressBar = document.getElementById('progress-bar');
-  btn.disabled = true;
-  btn.innerHTML = '<div class="spinner"></div> Saving...';
-  progressWrap.classList.add('visible');
-  let uploaded = 0;
-  const total = selectedFiles.length;
-  for (const file of selectedFiles) {
-    const path = 'photos/' + selectedSection + '/' + Date.now() + '_' + file.name;
-    const storageRef = ref(storage, path);
-    const task = uploadBytesResumable(storageRef, file);
-    await new Promise((resolve, reject) => {
-      task.on('state_changed',
-        snap => { progressBar.style.width = ((uploaded + snap.bytesTransferred / snap.totalBytes) / total * 100) + '%'; },
-        reject,
-        async () => {
-          const url = await getDownloadURL(task.snapshot.ref);
-          const docRef = await addDoc(collection(db, 'photos_' + selectedSection), { url, storagePath: path, createdAt: Date.now() });
-          allPhotos[selectedSection].unshift({ id: docRef.id, url, storagePath: path });
-          uploaded++;
-          resolve();
-        }
+      document.addEventListener("click", () =>
+        document
+          .querySelectorAll(".photo-item.menu-open")
+          .forEach((i) => i.classList.remove("menu-open"))
       );
-    });
-  }
-  renderSection(selectedSection);
-  const card = document.getElementById('section-' + selectedSection);
-  if (!card.classList.contains('open')) card.classList.add('open');
-  setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
-  closeUploadModal();
-  showToast(uploaded + ' photo' + (uploaded > 1 ? 's' : '') + ' saved to diary 🩵');
-};
 
-window.openUploadModal = function() {
-  selectedFiles = []; selectedSection = null;
-  document.getElementById('preview-grid').innerHTML = '';
-  document.getElementById('file-input').value = '';
-  document.getElementById('progress-bar').style.width = '0%';
-  document.getElementById('progress-wrap').classList.remove('visible');
-  const btn = document.getElementById('upload-btn');
-  btn.disabled = false; btn.innerHTML = 'Save to Our Diary';
-  document.querySelectorAll('.section-pill').forEach(p => p.classList.remove('selected'));
-  document.getElementById('upload-modal').classList.add('visible');
-};
+      window.deletePhoto = async function (photoId, sectionId, storagePath, e) {
+        e.stopPropagation();
+        document
+          .querySelectorAll(".photo-item.menu-open")
+          .forEach((i) => i.classList.remove("menu-open"));
+        if (!confirm("Delete this memory? 🥺")) return;
+        try {
+          await deleteDoc(doc(db, "photos_" + sectionId, photoId));
+          if (storagePath) {
+            try {
+              await deleteObject(ref(storage, storagePath));
+            } catch (_) {}
+          }
+          allPhotos[sectionId] = allPhotos[sectionId].filter(
+            (p) => p.id !== photoId
+          );
+          renderSection(sectionId);
+          showToast("Photo deleted 🗑️");
+        } catch (err) {
+          showToast("Could not delete, try again");
+        }
+      };
 
-window.closeUploadModal = function() { document.getElementById('upload-modal').classList.remove('visible'); };
-window.handleModalClick = function(e) { if (e.target === document.getElementById('upload-modal')) closeUploadModal(); };
+      window.handleFiles = function (files) {
+        selectedFiles = Array.from(files);
+        const grid = document.getElementById("preview-grid");
+        grid.innerHTML = "";
+        selectedFiles.forEach((file, i) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const item = document.createElement("div");
+            item.className = "preview-item";
+            item.innerHTML =
+              '<img src="' +
+              e.target.result +
+              '" /><button class="preview-remove" onclick="removePreview(' +
+              i +
+              ')">✕</button>';
+            grid.appendChild(item);
+          };
+          reader.readAsDataURL(file);
+        });
+      };
 
-window.openLightbox = function(url) {
-  document.getElementById('lightbox-img').src = url;
-  document.getElementById('lightbox').classList.add('visible');
-  document.body.style.overflow = 'hidden';
-};
+      window.removePreview = function (i) {
+        selectedFiles.splice(i, 1);
+        window.handleFiles(selectedFiles);
+      };
 
-window.closeLightbox = function() {
-  document.getElementById('lightbox').classList.remove('visible');
-  document.body.style.overflow = '';
-};
+      window.uploadPhotos = async function () {
+        if (!selectedFiles.length) {
+          showToast("Pick some photos first! 📷");
+          return;
+        }
+        if (!selectedSection) {
+          showToast("Choose a section! 🩵");
+          return;
+        }
+        const btn = document.getElementById("upload-btn");
+        const progressWrap = document.getElementById("progress-wrap");
+        const progressBar = document.getElementById("progress-bar");
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner"></div> Saving...';
+        progressWrap.classList.add("visible");
+        let uploaded = 0;
+        const total = selectedFiles.length;
+        for (const file of selectedFiles) {
+          const path =
+            "photos/" + selectedSection + "/" + Date.now() + "_" + file.name;
+          const storageRef = ref(storage, path);
+          const task = uploadBytesResumable(storageRef, file);
+          await new Promise((resolve, reject) => {
+            task.on(
+              "state_changed",
+              (snap) => {
+                progressBar.style.width =
+                  ((uploaded + snap.bytesTransferred / snap.totalBytes) /
+                    total) *
+                    100 +
+                  "%";
+              },
+              reject,
+              async () => {
+                const url = await getDownloadURL(task.snapshot.ref);
+                const docRef = await addDoc(
+                  collection(db, "photos_" + selectedSection),
+                  { url, storagePath: path, createdAt: Date.now() }
+                );
+                allPhotos[selectedSection].unshift({
+                  id: docRef.id,
+                  url,
+                  storagePath: path,
+                });
+                uploaded++;
+                resolve();
+              }
+            );
+          });
+        }
+        renderSection(selectedSection);
+        const card = document.getElementById("section-" + selectedSection);
+        if (!card.classList.contains("open")) card.classList.add("open");
+        setTimeout(
+          () => card.scrollIntoView({ behavior: "smooth", block: "start" }),
+          300
+        );
+        closeUploadModal();
+        showToast(
+          uploaded + " photo" + (uploaded > 1 ? "s" : "") + " saved to diary 🩵"
+        );
+      };
 
-window.showToast = function(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2800);
-};
+      window.openUploadModal = function () {
+        selectedFiles = [];
+        selectedSection = null;
+        document.getElementById("preview-grid").innerHTML = "";
+        document.getElementById("file-input").value = "";
+        document.getElementById("progress-bar").style.width = "0%";
+        document.getElementById("progress-wrap").classList.remove("visible");
+        const btn = document.getElementById("upload-btn");
+        btn.disabled = false;
+        btn.innerHTML = "Save to Our Diary";
+        document
+          .querySelectorAll(".section-pill")
+          .forEach((p) => p.classList.remove("selected"));
+        document.getElementById("upload-modal").classList.add("visible");
+      };
 
-const dz = document.getElementById('drop-zone');
-dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragging'); });
-dz.addEventListener('dragleave', () => dz.classList.remove('dragging'));
-dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('dragging'); window.handleFiles(e.dataTransfer.files); });
+      window.closeUploadModal = function () {
+        document.getElementById("upload-modal").classList.remove("visible");
+      };
+      window.handleModalClick = function (e) {
+        if (e.target === document.getElementById("upload-modal"))
+          closeUploadModal();
+      };
 
-buildSections();
-</script>
-</body>
+      window.openLightbox = function (url) {
+        document.getElementById("lightbox-img").src = url;
+        document.getElementById("lightbox").classList.add("visible");
+        document.body.style.overflow = "hidden";
+      };
+
+      window.closeLightbox = function () {
+        document.getElementById("lightbox").classList.remove("visible");
+        document.body.style.overflow = "";
+      };
+
+      window.showToast = function (msg) {
+        const t = document.getElementById("toast");
+        t.textContent = msg;
+        t.classList.add("show");
+        setTimeout(() => t.classList.remove("show"), 2800);
+      };
+
+      const dz = document.getElementById("drop-zone");
+      dz.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dz.classList.add("dragging");
+      });
+      dz.addEventListener("dragleave", () => dz.classList.remove("dragging"));
+      dz.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dz.classList.remove("dragging");
+        window.handleFiles(e.dataTransfer.files);
+      });
+
+      buildSections();
+    </script>
+  </body>
 </html>
