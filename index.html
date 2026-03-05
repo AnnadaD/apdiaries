@@ -445,17 +445,29 @@
         border-radius: 4px;
         background: rgba(184, 212, 232, 0.15);
         cursor: pointer;
-        transition: transform 0.15s;
+        contain: layout style paint;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
       }
       .photo-item img {
         width: 100%;
         height: 100%;
         object-fit: cover;
         display: block;
-        transition: transform 0.3s;
+        transition: opacity 0.25s;
+      }
+      .photo-item img.lazy {
+        opacity: 0;
+      }
+      .photo-item img.loaded {
+        opacity: 1;
       }
       .photo-item:hover img {
-        transform: scale(1.04);
+        opacity: 0.92;
+      }
+      .photo-item.pressing {
+        transform: scale(0.95);
+        transition: transform 0.08s;
       }
 
       /* Selection circle */
@@ -1393,6 +1405,24 @@
         }
       }
 
+      // Lazy load observer
+      const lazyObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              const img = entry.target;
+              if (img.dataset.src) {
+                img.src = img.dataset.src;
+                img.onload = () => img.classList.add("loaded");
+                img.removeAttribute("data-src");
+                lazyObserver.unobserve(img);
+              }
+            }
+          });
+        },
+        { rootMargin: "200px" }
+      );
+
       function renderSection(sectionId) {
         const photos = allPhotos[sectionId];
         const grid = document.getElementById("grid-" + sectionId);
@@ -1409,23 +1439,28 @@
             '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📷</div><div>no memories yet — add your first one!</div></div>';
           return;
         }
-        grid.innerHTML = "";
+
+        // Use DocumentFragment for fast batch DOM insert
+        const fragment = document.createDocumentFragment();
         photos.forEach((photo) => {
           const item = document.createElement("div");
           item.className =
             "photo-item" + (selectedIds.has(photo.id) ? " selected" : "");
           item.id = "photo-" + photo.id;
-          const safeUrl = (photo.url || "").replace(/'/g, "\\'");
-          const safePath = (photo.storagePath || "").replace(/'/g, "\\'");
+          const safeUrl = (photo.url || "").replace(/'/g, "'");
+          const safePath = (photo.storagePath || "").replace(/'/g, "'");
           const isVideo =
             photo.fileType === "video" ||
             (photo.url && /\.(mp4|mov|webm|avi)(\?|$)/i.test(photo.url));
-          const mediaHTML = isVideo
-            ? `<video src="${photo.url}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;" muted playsinline></video><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;"><span style="font-size:2rem;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5));">▶️</span></div>`
-            : `<img src="${photo.url}" alt="memory" loading="lazy" />`;
-          item.innerHTML = `
-            ${mediaHTML}
-            <div class="select-circle"></div>
+
+          if (isVideo) {
+            item.innerHTML = `<video src="${photo.url}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;" muted playsinline preload="none"></video><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;"><span style="font-size:2rem;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5));">▶️</span></div>`;
+          } else {
+            // Lazy load images - only load when scrolled into view
+            item.innerHTML = `<img class="lazy" data-src="${photo.url}" alt="" />`;
+          }
+
+          item.innerHTML += `<div class="select-circle"></div>
             <button class="photo-menu-btn" onclick="togglePhotoMenu(event,'${photo.id}')">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
             </button>
@@ -1441,33 +1476,62 @@
               </button>
             </div>`;
 
-          // Click handler: select mode vs normal
-          item.addEventListener("click", (e) => {
-            if (selectMode && selectSectionId === sectionId) {
-              e.stopPropagation();
-              toggleSelectItem(photo.id);
+          // Observe lazy images
+          const lazyImg = item.querySelector("img.lazy");
+          if (lazyImg) lazyObserver.observe(lazyImg);
+
+          // Use pointerdown for instant response (no 300ms tap delay)
+          item.addEventListener(
+            "pointerdown",
+            (e) => {
+              if (
+                e.target.closest(".photo-menu-btn") ||
+                e.target.closest(".photo-dropdown")
+              )
+                return;
+              if (selectMode && selectSectionId === sectionId) {
+                e.preventDefault();
+                e.stopPropagation();
+                item.classList.add("pressing");
+                setTimeout(() => item.classList.remove("pressing"), 120);
+                toggleSelectItem(photo.id);
+              }
+            },
+            { passive: false }
+          );
+
+          // Normal view tap (not in select mode) - track pointer movement to avoid scroll triggering lightbox
+          let pointerStartY = 0;
+          item.addEventListener(
+            "pointerdown",
+            (e) => {
+              pointerStartY = e.clientY;
+            },
+            { passive: true }
+          );
+          item.addEventListener("pointerup", (e) => {
+            if (
+              e.target.closest(".photo-menu-btn") ||
+              e.target.closest(".photo-dropdown")
+            )
+              return;
+            if (Math.abs(e.clientY - pointerStartY) > 8) return; // was a scroll, ignore
+            if (!selectMode) {
+              if (isVideo) openLightbox(photo.url, true);
+              else {
+                const img = item.querySelector("img");
+                if (img)
+                  openLightbox(img.src || img.dataset.src || photo.url, false);
+              }
             }
           });
-          if (isVideo) {
-            const vid = item.querySelector("video");
-            vid.addEventListener("click", (e) => {
-              if (!selectMode) {
-                e.stopPropagation();
-                openLightbox(photo.url, true);
-              }
-            });
-          } else {
-            const img = item.querySelector("img");
-            img.addEventListener("click", (e) => {
-              if (!selectMode) {
-                e.stopPropagation();
-                openLightbox(photo.url, false);
-              }
-            });
-          }
-          grid.appendChild(item);
+
+          fragment.appendChild(item);
         });
-        // Apply selecting-mode class if active for this section
+
+        grid.innerHTML = "";
+        grid.appendChild(fragment);
+
         if (selectMode && selectSectionId === sectionId) {
           grid.classList.add("selecting-mode");
         }
