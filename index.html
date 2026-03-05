@@ -2048,8 +2048,8 @@
         const start = new Date(2025, 2, 1); // Show from March 1
         // Use 2025 year for the anniversary — adjust if needed
         // Actually check current year too
-        const thisYear = new Date(now.getFullYear(), 2, 7); // hide from March 7 onwards
-        const thisStart = new Date(now.getFullYear(), 2, 6); // show from March 6
+        const thisYear = new Date(now.getFullYear(), 2, 8); // hide from March 8 onwards
+        const thisStart = new Date(now.getFullYear(), 2, 5); // show from March 5
         if (now >= thisStart && now < thisYear) {
           const banner = document.getElementById("anniv-banner");
           if (banner) banner.style.display = "block";
