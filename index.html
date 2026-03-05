@@ -1125,9 +1125,10 @@
     <div id="login-screen">
       <div class="login-card">
         <div class="anniv-banner" id="anniv-banner" style="display: none">
-          <p class="anniv-date">✦ 7 march 2024 — 7 march 2025 ✦</p>
+          <p class="anniv-date">✦ 6 march 2025 — 6 march 2026 ✦</p>
           <p class="anniv-msg">
-            "one whole year of you,<br />and i'd choose every single day again."
+            Happy one year &lt;3<br /><br />Our first year of memories are saved
+            here.<br />Now let's keep filling it, year after year. ^ . ^
           </p>
           <span class="anniv-hearts">🌻 🩵 🌻</span>
           <div class="anniv-divider"></div>
@@ -2047,8 +2048,8 @@
         const start = new Date(2025, 2, 1); // Show from March 1
         // Use 2025 year for the anniversary — adjust if needed
         // Actually check current year too
-        const thisYear = new Date(now.getFullYear(), 2, 8);
-        const thisStart = new Date(now.getFullYear(), 2, 1);
+        const thisYear = new Date(now.getFullYear(), 2, 7); // hide from March 7 onwards
+        const thisStart = new Date(now.getFullYear(), 2, 6); // show from March 6
         if (now >= thisStart && now < thisYear) {
           const banner = document.getElementById("anniv-banner");
           if (banner) banner.style.display = "block";
