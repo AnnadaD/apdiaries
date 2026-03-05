@@ -52,6 +52,7 @@
         min-height: 100vh;
         color: var(--text-dark);
         overflow-x: hidden;
+        overflow-y: auto;
       }
 
       /* LOGIN */
@@ -322,6 +323,12 @@
         max-width: 960px;
         margin: 0 auto;
       }
+      .photo-grid {
+        will-change: auto;
+      }
+      * {
+        -webkit-overflow-scrolling: touch;
+      }
       .section-card {
         background: var(--glass);
         backdrop-filter: blur(16px);
@@ -382,12 +389,16 @@
         transform: rotate(180deg);
       }
       .section-body {
-        max-height: 0;
+        display: grid;
+        grid-template-rows: 0fr;
+        transition: grid-template-rows 0.35s ease;
+      }
+      .section-body-inner {
         overflow: hidden;
-        transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        min-height: 0;
       }
       .section-card.open .section-body {
-        max-height: 9999px;
+        grid-template-rows: 1fr;
       }
       .section-divider {
         height: 1px;
@@ -445,7 +456,6 @@
         border-radius: 4px;
         background: rgba(184, 212, 232, 0.15);
         cursor: pointer;
-        contain: layout style paint;
         -webkit-tap-highlight-color: transparent;
         touch-action: manipulation;
       }
@@ -454,16 +464,13 @@
         height: 100%;
         object-fit: cover;
         display: block;
-        transition: opacity 0.25s;
+        transition: opacity 0.3s;
       }
       .photo-item img.lazy {
         opacity: 0;
       }
       .photo-item img.loaded {
         opacity: 1;
-      }
-      .photo-item:hover img {
-        opacity: 0.92;
       }
       .photo-item.pressing {
         transform: scale(0.95);
@@ -1358,11 +1365,13 @@
             </div>
             <div class="section-divider"></div>
             <div class="section-body">
-              <div class="select-bar">
-                <span></span>
-                <button class="select-btn" onclick="enterSelectMode('${sec.id}', event)">Select</button>
+              <div class="section-body-inner">
+                <div class="select-bar">
+                  <span></span>
+                  <button class="select-btn" onclick="enterSelectMode('${sec.id}', event)">Select</button>
+                </div>
+                <div class="photo-grid" id="grid-${sec.id}"></div>
               </div>
-              <div class="photo-grid" id="grid-${sec.id}"></div>
             </div>`;
           container.appendChild(card);
           const pill = document.createElement("button");
