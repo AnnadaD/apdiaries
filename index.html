@@ -157,6 +157,50 @@
         display: none;
       }
 
+      /* Anniversary message */
+      .anniv-banner {
+        margin-bottom: 24px;
+        animation: fadeInDown 0.8s ease both;
+      }
+      .anniv-date {
+        font-size: 0.72rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.55);
+        margin-bottom: 10px;
+      }
+      .anniv-msg {
+        font-family: "Cormorant Garamond", serif;
+        font-size: 1.15rem;
+        font-weight: 300;
+        font-style: italic;
+        color: rgba(255, 255, 255, 0.92);
+        line-height: 1.6;
+        text-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+      }
+      .anniv-hearts {
+        font-size: 1.1rem;
+        margin-top: 10px;
+        letter-spacing: 4px;
+        display: block;
+      }
+      .anniv-divider {
+        width: 40px;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.25);
+        margin: 16px auto;
+      }
+      @keyframes fadeInDown {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
       #app {
         display: none;
       }
@@ -1080,6 +1124,14 @@
 
     <div id="login-screen">
       <div class="login-card">
+        <div class="anniv-banner" id="anniv-banner" style="display: none">
+          <p class="anniv-date">✦ 7 march 2024 — 7 march 2025 ✦</p>
+          <p class="anniv-msg">
+            "one whole year of you,<br />and i'd choose every single day again."
+          </p>
+          <span class="anniv-hearts">🌻 🩵 🌻</span>
+          <div class="anniv-divider"></div>
+        </div>
         <span class="login-sunflower">🌻</span>
         <h1 class="login-title">AP Diaries</h1>
         <p class="login-sub">✦ ✦</p>
@@ -1987,6 +2039,21 @@
         dz.classList.remove("dragging");
         window.handleFiles(e.dataTransfer.files);
       });
+
+      // Show anniversary banner only until March 7th
+      (function () {
+        const now = new Date();
+        const cutoff = new Date(2025, 2, 8); // March 8 = no longer show (months are 0-indexed)
+        const start = new Date(2025, 2, 1); // Show from March 1
+        // Use 2025 year for the anniversary — adjust if needed
+        // Actually check current year too
+        const thisYear = new Date(now.getFullYear(), 2, 8);
+        const thisStart = new Date(now.getFullYear(), 2, 1);
+        if (now >= thisStart && now < thisYear) {
+          const banner = document.getElementById("anniv-banner");
+          if (banner) banner.style.display = "block";
+        }
+      })();
 
       if (isLoggedIn()) {
         enterApp();
